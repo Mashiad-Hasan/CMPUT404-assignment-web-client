@@ -23,6 +23,18 @@ import socket
 import re
 # you may use urllib to encode data appropriately
 import urllib.parse
+from urllib.parse import urlparse
+
+def get_remote_ip(host):
+    #print(f'Getting IP for {host}')
+    try:
+        remote_ip = socket.gethostbyname( host )
+    except socket.gaierror:
+        print ('Hostname could not be resolved. Exiting')
+        sys.exit()
+
+    #print (f'Ip address of {host} is {remote_ip}')
+    return remote_ip
 
 def help():
     print("httpclient.py [GET/POST] [URL]\n")
@@ -31,14 +43,19 @@ class HTTPResponse(object):
     def __init__(self, code=200, body=""):
         self.code = code
         self.body = body
+    
 
 class HTTPClient(object):
     #def get_host_port(self,url):
 
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.connect((host, port))
-        return None
+        
+        print("host is: "+str(host))
+        remote_ip = get_remote_ip(host)
+        self.socket.connect((remote_ip, port))
+        #print("here")
+        return self.socket
 
     def get_code(self, data):
         return None
@@ -68,9 +85,59 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
-        code = 500
+        #code = 500
         body = ""
-        return HTTPResponse(code, body)
+        # self.get_headers(url)
+        #return HTTPResponse(code, body)
+        
+        # self.sendall(request)
+        #self.recvall()
+        print("1")
+        u = urlparse(url)
+        host = u.hostname
+        #print(host)
+        query = u.query
+        path = u.path
+
+        if host == "127.0.0.1":
+            port = u.port
+        else:
+            port = 80
+        
+        print("port is: "+str(port))
+        # # request = 'GET ' + '/'+ url + '/ ' + 'HTTP/1.1'
+        # request = "GET /about/about_careers.htm HTTP/1.1\n"
+        # request=request+"User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)\n"
+        # request=request+"Host: www.tutorialspoint.com\n"
+        # request=request+"Accept-Language: en-us\n"
+        # request=request+"Accept-Encoding: gzip, deflate\n"
+        # request=request+"Connection: Kill\n"
+        request = f'GET {path} HTTP/1.1\r\nHost: {host}\r\n\r\n'
+
+        print("request is: ")
+        print(request)
+        print('-'*50)
+        self.connect(host,port)
+        #print(self.socket)
+        self.sendall(request)
+        self.socket.shutdown(socket.SHUT_WR)
+        #print(request)
+        print("2")
+        response = str(self.recvall(self.socket))
+        print(response)
+        print("3")
+        parts = response.split(" ")
+        print(parts)
+        code = int(parts[1])
+        print("body is :")
+        
+
+        headers_and_body = response.split("\r\n\r\n")
+        body = headers_and_body[1]
+        print(body)
+
+        return HTTPResponse(code, body) # do this baby
+        
 
     def POST(self, url, args=None):
         code = 500
