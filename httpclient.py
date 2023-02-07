@@ -33,7 +33,7 @@ def get_remote_ip(host):
         print ('Hostname could not be resolved. Exiting')
         sys.exit()
 
-    #print (f'Ip address of {host} is {remote_ip}')
+    print (f'Ip address of {host} is {remote_ip}')
     return remote_ip
 
 def help():
@@ -78,6 +78,8 @@ class HTTPClient(object):
         done = False
         while not done:
             part = sock.recv(1024)
+            print('part is')
+            print(part)
             if (part):
                 buffer.extend(part)
             else:
@@ -94,10 +96,15 @@ class HTTPClient(object):
         #self.recvall()
         print("1")
         u = urlparse(url)
+        print(u)
         host = u.hostname
+        
         #print(host)
         query = u.query
         path = u.path
+        if path == '':
+            path = path + '/'
+        port = u.port
 
         if host == "127.0.0.1":
             port = u.port
@@ -105,14 +112,9 @@ class HTTPClient(object):
             port = 80
         
         print("port is: "+str(port))
-        # # request = 'GET ' + '/'+ url + '/ ' + 'HTTP/1.1'
-        # request = "GET /about/about_careers.htm HTTP/1.1\n"
-        # request=request+"User-Agent: Mozilla/4.0 (compatible; MSIE5.01; Windows NT)\n"
-        # request=request+"Host: www.tutorialspoint.com\n"
-        # request=request+"Accept-Language: en-us\n"
-        # request=request+"Accept-Encoding: gzip, deflate\n"
-        # request=request+"Connection: Kill\n"
-        request = f'GET {path} HTTP/1.1\r\nHost: {host}\r\n\r\n'
+        request = f'GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n'
+        # request = 'GET / HTTP/1.1\r\nHost: slashdot.org\r\nConnection: close\r\n\r\n'
+       
 
         print("request is: ")
         print(request)
@@ -120,11 +122,12 @@ class HTTPClient(object):
         self.connect(host,port)
         #print(self.socket)
         self.sendall(request)
-        self.socket.shutdown(socket.SHUT_WR)
+        #self.socket.shutdown(socket.SHUT_WR)
+        
         #print(request)
         print("2")
-        response = str(self.recvall(self.socket))
-        print(response)
+        response = self.recvall(self.socket)
+        # print(type(response))
         print("3")
         parts = response.split(" ")
         print(parts)
@@ -136,7 +139,8 @@ class HTTPClient(object):
         body = headers_and_body[1]
         print(body)
 
-        return HTTPResponse(code, body) # do this baby
+        self.socket.close()
+        return HTTPResponse(code, body) 
         
 
     def POST(self, url, args=None):
