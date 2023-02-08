@@ -25,6 +25,15 @@ import re
 import urllib.parse
 from urllib.parse import urlparse
 
+
+def help():
+    print("httpclient.py [GET/POST] [URL]\n")
+
+class HTTPResponse(object):
+    def __init__(self, code=200, body=""):
+        self.code = code
+        self.body = body
+    
 def get_remote_ip(host):
     #print(f'Getting IP for {host}')
     try:
@@ -35,32 +44,31 @@ def get_remote_ip(host):
 
     return remote_ip
 
-def help():
-    print("httpclient.py [GET/POST] [URL]\n")
-
-class HTTPResponse(object):
-    def __init__(self, code=200, body=""):
-        self.code = code
-        self.body = body
-    
 
 class HTTPClient(object):
 
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
         remote_ip = get_remote_ip(host)
         self.socket.connect((remote_ip, port))
         return self.socket
 
-    def get_code(self, data):
-        return None
+    def get_code(self, response):
+        parts = response.split(" ")
+        code = int(parts[1])
 
-    def get_headers(self,data):
-        return None
+        return code
 
-    def get_body(self, data):
-        return None
+    def get_response(self):
+        response = self.recvall(self.socket)
+
+        return response
+
+    def get_body(self, response):
+        headers_and_body = response.split("\r\n\r\n")
+        body = headers_and_body[1]
+
+        return body
     
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
@@ -81,15 +89,12 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
-       
-        
         u = urlparse(url)
        
         host = u.hostname
-        
-        
         query = u.query
         path = u.path
+
         if path == '':
             path = path + '/'
         port = u.port
@@ -98,7 +103,6 @@ class HTTPClient(object):
             port = u.port
         else:
             port = 80
-        
         
         request = f'GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n'
         
@@ -107,31 +111,21 @@ class HTTPClient(object):
         self.sendall(request)
         #self.socket.shutdown(socket.SHUT_WR)
         
-        response = self.recvall(self.socket)
+        response = self.get_response()
+        code = self.get_code(response)
+        body = self.get_body(response)
         
-        parts = response.split(" ")
-        
-        code = int(parts[1])
-
-        headers_and_body = response.split("\r\n\r\n")
-        body = headers_and_body[1]
-        
-
         self.close()
         return HTTPResponse(code, body) 
         
 
     def POST(self, url, args=None):
-        code = 500
-        body = ""
-
         u = urlparse(url)
         
         host = u.hostname
-        
-        
         query = u.query
         path = u.path
+
         if path == '':
             path = path + '/'
         port = u.port
@@ -141,7 +135,6 @@ class HTTPClient(object):
         else:
             port = 80
 
-        
         content_length = int(sys.getsizeof(args)) + 10
         request = f'POST {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\nContent-Length: {content_length}\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\n'
         
@@ -160,16 +153,10 @@ class HTTPClient(object):
         self.sendall(request) # send body of post to the server
         self.socket.shutdown(socket.SHUT_WR)
         
-       
-        response = self.recvall(self.socket)
+        response = self.get_response()
+        code = self.get_code(response)
+        body = self.get_body(response)
         
-        parts = response.split(" ")
-       
-        code = int(parts[1])
-
-        headers_and_body = response.split("\r\n\r\n")
-        body = headers_and_body[1]
-
         self.close()
         return HTTPResponse(code, body)
 
