@@ -33,7 +33,6 @@ def get_remote_ip(host):
         print ('Hostname could not be resolved. Exiting')
         sys.exit()
 
-    print (f'Ip address of {host} is {remote_ip}')
     return remote_ip
 
 def help():
@@ -46,15 +45,12 @@ class HTTPResponse(object):
     
 
 class HTTPClient(object):
-    #def get_host_port(self,url):
 
     def connect(self, host, port):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        print("host is: "+str(host))
         remote_ip = get_remote_ip(host)
         self.socket.connect((remote_ip, port))
-        #print("here")
         return self.socket
 
     def get_code(self, data):
@@ -78,8 +74,6 @@ class HTTPClient(object):
         done = False
         while not done:
             part = sock.recv(1024)
-            print('part is')
-            print(part)
             if (part):
                 buffer.extend(part)
             else:
@@ -87,19 +81,13 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
-        #code = 500
-        body = ""
-        # self.get_headers(url)
-        #return HTTPResponse(code, body)
+       
         
-        # self.sendall(request)
-        #self.recvall()
-        print("1")
         u = urlparse(url)
-        print(u)
+       
         host = u.hostname
         
-        #print(host)
+        
         query = u.query
         path = u.path
         if path == '':
@@ -111,41 +99,78 @@ class HTTPClient(object):
         else:
             port = 80
         
-        print("port is: "+str(port))
+        
         request = f'GET {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n'
-        # request = 'GET / HTTP/1.1\r\nHost: slashdot.org\r\nConnection: close\r\n\r\n'
-       
-
-        print("request is: ")
-        print(request)
-        print('-'*50)
+        
         self.connect(host,port)
-        #print(self.socket)
+        
         self.sendall(request)
         #self.socket.shutdown(socket.SHUT_WR)
         
-        #print(request)
-        print("2")
         response = self.recvall(self.socket)
-        # print(type(response))
-        print("3")
-        parts = response.split(" ")
-        print(parts)
-        code = int(parts[1])
-        print("body is :")
         
+        parts = response.split(" ")
+        
+        code = int(parts[1])
 
         headers_and_body = response.split("\r\n\r\n")
         body = headers_and_body[1]
-        print(body)
+        
 
-        self.socket.close()
+        self.close()
         return HTTPResponse(code, body) 
         
 
     def POST(self, url, args=None):
         code = 500
         body = ""
+
+        u = urlparse(url)
+        
+        host = u.hostname
+        
+        
+        query = u.query
+        path = u.path
+        if path == '':
+            path = path + '/'
+        port = u.port
+
+        if host == "127.0.0.1":
+            port = u.port
+        else:
+            port = 80
+
+        
+        content_length = int(sys.getsizeof(args)) + 10
+        request = f'POST {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\nContent-Length: {content_length}\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\n'
+        
+        if args.__class__.__name__ == 'dict':
+            req_body = ''
+            for key,value in args.items():
+                req_body=req_body+str(key)+'='+str(value)+'&'
+            req_body = req_body[:-1]
+        else:
+            req_body = str(args)
+
+        request = request + req_body 
+        
+        self.connect(host,port)
+      
+        self.sendall(request) # send body of post to the server
+        self.socket.shutdown(socket.SHUT_WR)
+        
+       
+        response = self.recvall(self.socket)
+        
+        parts = response.split(" ")
+       
+        code = int(parts[1])
+
+        headers_and_body = response.split("\r\n\r\n")
+        body = headers_and_body[1]
+
+        self.close()
         return HTTPResponse(code, body)
 
     def command(self, url, command="GET", args=None):
