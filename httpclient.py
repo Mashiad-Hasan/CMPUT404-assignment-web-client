@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # coding: utf-8
 # Copyright 2016 Abram Hindle, https://github.com/tywtyw2002, and https://github.com/treedust
-# 
+# Copyright 2023 Mashiad Hasan (new)
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -89,8 +90,11 @@ class HTTPClient(object):
         return buffer.decode('utf-8')
 
     def GET(self, url, args=None):
+
+        # Adapted from: Python Docs
+        # URL: https://docs.python.org/3/library/urllib.parse.html
+
         u = urlparse(url)
-       
         host = u.hostname
         query = u.query
         path = u.path
@@ -120,8 +124,10 @@ class HTTPClient(object):
         
 
     def POST(self, url, args=None):
+
+        # Adapted from: Python Docs
+        # URL: https://docs.python.org/3/library/urllib.parse.html
         u = urlparse(url)
-        
         host = u.hostname
         query = u.query
         path = u.path
@@ -135,10 +141,18 @@ class HTTPClient(object):
         else:
             port = 80
 
+        # Adapted from: Python Docs
+        # URL: https://docs.python.org/3/library/sys.html
+       
         content_length = int(sys.getsizeof(args)) + 10
+
         request = f'POST {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\nContent-Length: {content_length}\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\n'
         
+        # Adapted from: Python Docs
+        # URL: https://docs.python.org/3/reference/datamodel.html
+        
         if args.__class__.__name__ == 'dict':
+            
             req_body = ''
             for key,value in args.items():
                 req_body=req_body+str(key)+'='+str(value)+'&'
