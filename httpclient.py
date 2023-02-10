@@ -65,12 +65,13 @@ class HTTPClient(object):
 
         return response
 
-    def get_body(self, response):
+    def get_headers_and_body(self, response):
         headers_and_body = response.split("\r\n\r\n")
+        headers = headers_and_body[0]
         body = headers_and_body[1]
 
-        return body
-    
+        return headers,body
+
     def sendall(self, data):
         self.socket.sendall(data.encode('utf-8'))
         
@@ -117,7 +118,10 @@ class HTTPClient(object):
         
         response = self.get_response()
         code = self.get_code(response)
-        body = self.get_body(response)
+        headers, body = self.get_headers_and_body(response)
+
+        print(headers)
+        print("-"*50)
         
         self.close()
         return HTTPResponse(code, body) 
@@ -169,7 +173,10 @@ class HTTPClient(object):
         
         response = self.get_response()
         code = self.get_code(response)
-        body = self.get_body(response)
+        headers, body = self.get_headers_and_body(response)
+
+        print(headers)
+        print("-"*50)
         
         self.close()
         return HTTPResponse(code, body)
