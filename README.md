@@ -27,11 +27,11 @@ Prepared in consultation with the following collaborators:
 
 
 In the file httpclient.py:
-* The URL parse code was adapted from Python Docs (lines 97-100; 130-133)
+* The URL parse code was adapted from Python Docs (lines 98-101; 134-137)
    * URL: https://docs.python.org/3/library/urllib.parse.html
 
-* Calculation for content_length was also derived from Python Docs (line 147)
+* Calculation for content_length was also derived from Python Docs (line 151)
    * URL: https://docs.python.org/3/library/sys.html
 
-* The code deriving a string of the data type for args (line 154) was also derived from Python Docs
+* The code deriving a string of the data type for args (line 158) was also derived from Python Docs
    * URL: https://docs.python.org/3/reference/datamodel.html
